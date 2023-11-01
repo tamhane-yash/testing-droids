@@ -1,0 +1,7 @@
+In that project we are doing manual dependence
+
+we have UserRegistrationService will be responsible for save
+the user and acknowledge through email
+
+for that it required two objects user repository for saving user
+and email service for acknowledge through email
