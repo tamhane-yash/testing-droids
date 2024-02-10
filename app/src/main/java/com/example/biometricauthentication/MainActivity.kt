@@ -1,11 +1,13 @@
 package com.example.biometricauthentication
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
@@ -19,12 +21,15 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.example.biometricauthentication.ui.theme.BiometricAuthenticationTheme
 import com.example.biometricauthentication.ui.theme.checkExistence
+import com.example.biometricauthentication.ui.theme.cipher
+import com.example.biometricauthentication.ui.theme.generateSecretKey
 import com.example.biometricauthentication.ui.theme.sdkInt
 import com.example.biometricauthentication.ui.theme.showToast
 
 val LocalActivity = compositionLocalOf<FragmentActivity> { error("error") }
 
 class MainActivity : FragmentActivity() {
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -37,6 +42,7 @@ class MainActivity : FragmentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.R)
 @Composable
 fun BiometricAuth() {
     val context = LocalContext.current
@@ -63,7 +69,7 @@ fun BiometricAuth() {
 
             })
     val biometricManager = BiometricManager.from(context)
-    
+
     LaunchedEffect(key1 = resultCode.value, block = {
         biometricManager.checkExistence(onSuccess = {
             val biometricPromptInfo = BiometricPrompt.PromptInfo
@@ -88,13 +94,19 @@ fun BiometricAuth() {
                         context.showToast("success")
                     }
 
-                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    override fun onAuthenticationError(
+                        errorCode: Int,
+                        errString: CharSequence
+                    ) {
                         super.onAuthenticationError(errorCode, errString)
                         context.showToast("error")
                     }
 
                 })
-            biometricPrompt.authenticate(biometricPromptInfo)
+            val secretKey = generateSecretKey()
+            val cipher = cipher(secretKey)
+            val cryptObject = BiometricPrompt.CryptoObject(cipher)
+            biometricPrompt.authenticate(biometricPromptInfo, cryptObject)
 
         },
             openSettings = {
